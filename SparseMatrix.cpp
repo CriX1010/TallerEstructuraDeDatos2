@@ -12,30 +12,22 @@ SparseMatrix::SparseMatrix() {
 SparseMatrix::~SparseMatrix() {
     Nodo* filaPtr = head;
 
-    Nodo* colPtr = filaPtr->derecha;
+    Nodo* colPtr = filaPtr-> getDerecha();
     while (colPtr != filaPtr) {
         Nodo* tmp = colPtr;
-        colPtr = colPtr->derecha;
+        colPtr = colPtr-> getDerecha();
         delete tmp;
     }
-    Nodo* tmpFila = filaPtr;
-    if (filaPtr != filaPtr->abajo) {
-        filaPtr = filaPtr->abajo;
-        delete tmpFila;
-    } else {
-        delete filaPtr;
-        return;
-    }
-
+    filaPtr = filaPtr-> getAbajo();
     while (filaPtr != head) {
-        colPtr = filaPtr->derecha;
+        colPtr = filaPtr->getDerecha();
         while (colPtr != filaPtr) {
             Nodo* tmp = colPtr;
-            colPtr = colPtr->derecha;
+            colPtr = colPtr->getDerecha();
             delete tmp;
         }
-        tmpFila = filaPtr;
-        filaPtr = filaPtr->abajo;
+        Nodo* tmpFila = filaPtr;
+        filaPtr = filaPtr->getAbajo();
         delete tmpFila;
     }
     delete head;
@@ -44,16 +36,37 @@ SparseMatrix::~SparseMatrix() {
 Nodo* SparseMatrix::crearNodo(int f, int c, double v) {
     return new Nodo(f, c, v);
 }
+void SparseMatrix::optimizar() {
+    Nodo* filaPtr = head -> getArriba();
+    Nodo* colPtr = head -> getIzquierda();
+    while (filaPtr-> getDerecha() == filaPtr) {
+        Nodo* PtrAux = filaPtr -> getArriba();
+        PtrAux->setAbajo(filaPtr -> getAbajo());
+        filaPtr ->getAbajo()->setArriba(PtrAux);
+        filaPtr = PtrAux;
+        numFilas-=1;
+    }
+    while (colPtr-> getAbajo() == colPtr) {
+        Nodo* PtrAux = colPtr->getIzquierda();
+        PtrAux->setDerecha(colPtr -> getDerecha());
+        colPtr ->getDerecha()->setIzquierda(PtrAux);
+        delete colPtr;
+        colPtr = PtrAux;
+        numColumnas-=1;
+    }
+}
+
+
 double SparseMatrix::cantNodos()  const{
     double cont = 0;
-    Nodo* filaPtr = head->abajo;
+    Nodo* filaPtr = head->getAbajo();
     while (filaPtr != head) {
-        Nodo* colPtr = filaPtr->derecha;
+        Nodo* colPtr = filaPtr->getDerecha();
         while (colPtr != filaPtr) {
             cont++;
-            colPtr = colPtr->derecha;
+            colPtr = colPtr->getDerecha();
         }
-        filaPtr = filaPtr->abajo;
+        filaPtr = filaPtr->getAbajo();
     }
     return cont;
 }
@@ -62,15 +75,15 @@ bool SparseMatrix::existe(int fila,int columna) {
     if (fila > numFilas || columna > numColumnas || fila < 0 || columna < 0) {
         return false;
     }
-    Nodo* AuxPtr = head->abajo;
-    while (AuxPtr->fila != fila) {
-        AuxPtr = AuxPtr->abajo;
+    Nodo* AuxPtr = head->getAbajo();
+    while (AuxPtr->getFila() != fila) {
+        AuxPtr = AuxPtr->getAbajo();
     }
 
     Nodo* temp = AuxPtr;
-    AuxPtr = AuxPtr->derecha;
-    while (AuxPtr->columna != columna && AuxPtr != temp) {
-        AuxPtr = AuxPtr->derecha;
+    AuxPtr = AuxPtr->getDerecha();
+    while (AuxPtr->getColumna() != columna && AuxPtr != temp) {
+        AuxPtr = AuxPtr->getDerecha();
     }
 
     if (AuxPtr == temp) {return false;}
@@ -80,8 +93,8 @@ bool SparseMatrix::existe(int fila,int columna) {
 
 void SparseMatrix::add(int fila, int columna, double valor) {
 
-    Nodo* filaPtr = head -> abajo;
-    Nodo* colPtr = head -> derecha;
+    Nodo* filaPtr = head -> getAbajo();
+    Nodo* colPtr = head -> getDerecha();
 
     if (existe(fila,columna)) {
         cout << "Posición ya utilizada.\n";
@@ -96,23 +109,25 @@ void SparseMatrix::add(int fila, int columna, double valor) {
     // Crear Nodos Auxiliares de posicion
     if (fila > numFilas) {
         while (fila > numFilas) {
-            if (filaPtr->abajo == head) {
-                filaPtr->abajo = new Nodo(filaPtr->fila +1 , filaPtr->columna, 0);
-                filaPtr->abajo->abajo = head;
+            if (filaPtr->getAbajo() == head) {
+                filaPtr-> setAbajo(new Nodo(filaPtr->getFila() +1 , filaPtr->getColumna(), 0));
+                filaPtr-> getAbajo()-> setAbajo(head);
+                filaPtr-> getAbajo()-> setArriba(filaPtr);
                 numFilas++;
             } else {
-                filaPtr = filaPtr->abajo;
+                filaPtr = filaPtr->getAbajo();
             }
         }
     }
     if (columna > numColumnas) {
         while (columna > numColumnas) {
-            if (colPtr->derecha == head) {
-                colPtr->derecha = new Nodo(colPtr->fila, colPtr->columna +1 , 0);
-                colPtr->derecha->derecha = head;
+            if (colPtr->getDerecha() == head) {
+                colPtr->setDerecha(new Nodo(colPtr->getFila(), colPtr->getColumna() +1 , 0));
+                colPtr->getDerecha()->setDerecha(head);
+                colPtr->getDerecha()->setIzquierda(colPtr);
                 numColumnas++;
             } else {
-                colPtr = colPtr->derecha;
+                colPtr = colPtr->getDerecha();
             }
         }
     }
@@ -120,50 +135,52 @@ void SparseMatrix::add(int fila, int columna, double valor) {
     Nodo* nuevo = crearNodo(fila, columna, valor);
 
     filaPtr = head;
-    while (filaPtr->fila != fila) {
-        filaPtr = filaPtr->abajo;
+    while (filaPtr->getFila() != fila) {
+        filaPtr = filaPtr->getAbajo();
     }
     colPtr = head;
-    while (colPtr->columna != columna) {
-        colPtr = colPtr->derecha;
+    while (colPtr->getColumna() != columna) {
+        colPtr = colPtr->getDerecha();
     }
 
     Nodo* temp = filaPtr;
-    while (filaPtr->derecha->columna < columna && filaPtr->derecha != temp) {
-        filaPtr = filaPtr->derecha;
+    while (filaPtr->getDerecha()->getColumna() < columna && filaPtr->getDerecha() != temp) {
+        filaPtr = filaPtr->getDerecha();
     }
-    Nodo* temp2 = filaPtr->derecha;
-    filaPtr->derecha = nuevo;
-    filaPtr->derecha->derecha = temp2;
+    Nodo* temp2 = filaPtr->getDerecha();
+    filaPtr->setDerecha(nuevo);
+    filaPtr->getDerecha()->setDerecha(temp2);
+    filaPtr->getDerecha()->setIzquierda(filaPtr);
 
     temp = colPtr;
-    while (colPtr->abajo->fila < fila && colPtr->abajo != temp) {
-        colPtr = colPtr->abajo;
+    while (colPtr->getAbajo()->getFila() < fila && colPtr->getAbajo() != temp) {
+        colPtr = colPtr->getAbajo();
     }
-    temp2 = colPtr->abajo;
-    colPtr->abajo = nuevo;
-    colPtr->abajo->abajo = temp2;
+    temp2 = colPtr->getAbajo();
+    colPtr->setAbajo(nuevo);
+    colPtr->getAbajo()->setAbajo(temp2);
+    colPtr->getAbajo()->setArriba(colPtr);
 
 }
 
 // ---------------------- Get ----------------------
-double SparseMatrix::get(int fila, int columna) {
+int SparseMatrix::get(int fila, int columna) {
 
     if (fila > numFilas || columna > numColumnas || fila < 0 || columna < 0) {
         cout << "El valor esta fuera de rango" << endl;
     }
-    Nodo* AuxPtr = head->abajo;
-    while (AuxPtr->fila != fila) {
-        AuxPtr = AuxPtr->abajo;
+    Nodo* AuxPtr = head->getAbajo();
+    while (AuxPtr->getFila() != fila) {
+        AuxPtr = AuxPtr->getAbajo();
     }
 
     Nodo* temp = AuxPtr;
-    AuxPtr = AuxPtr->derecha;
-    while (AuxPtr->columna != columna && AuxPtr != temp) {
-        AuxPtr = AuxPtr->derecha;
+    AuxPtr = AuxPtr->getDerecha();
+    while (AuxPtr->getColumna() != columna && AuxPtr != temp) {
+        AuxPtr = AuxPtr->getDerecha();
     }
 
-    return AuxPtr->valor;
+    return AuxPtr->getValor();
 }
 // ---------------------- Remove ----------------------
 void SparseMatrix::remove(int fila, int columna) {
@@ -173,66 +190,48 @@ void SparseMatrix::remove(int fila, int columna) {
         return;
     }
 
-    Nodo* filaPtr = head->abajo;
-    Nodo* colPtr = head->derecha;
+    Nodo* filaPtr = head->getAbajo();
+    Nodo* colPtr = head->getDerecha();
 
-    while (filaPtr->fila != fila) {
-        filaPtr = filaPtr->abajo;
+    while (filaPtr->getFila() != fila) {
+        filaPtr = filaPtr->getAbajo();
     }
-    while (colPtr->columna != columna) {
-        colPtr = colPtr->derecha;
+    while (colPtr->getColumna() != columna) {
+        colPtr = colPtr->getDerecha();
     }
 
     Nodo* temp = filaPtr;
-    while (filaPtr->derecha->columna != columna && filaPtr->derecha != temp) {
-        filaPtr = filaPtr->derecha;
+    while (filaPtr->getDerecha()->getColumna() != columna && filaPtr->getDerecha() != temp) {
+        filaPtr = filaPtr->getDerecha();
     }
-    if (filaPtr->derecha == temp) {
+    if (filaPtr->getDerecha() == temp) {
         return;
     }
-    temp = filaPtr->derecha;
+    temp = filaPtr->getDerecha();
 
-    while (colPtr->abajo != temp) {
-        colPtr = colPtr->abajo;
+    while (colPtr->getAbajo() != temp) {
+        colPtr = colPtr->getAbajo();
     }
 
-    filaPtr->derecha = temp ->derecha;
-    colPtr->abajo = temp->abajo;
+    filaPtr->setDerecha(temp -> getDerecha());
+    colPtr->setAbajo(temp -> getAbajo());
+    temp->getDerecha() ->setIzquierda(filaPtr);
+    temp->getAbajo() ->setArriba(colPtr);
     delete temp;
 
-    while (filaPtr-> derecha == filaPtr) {
-        Nodo* PtrAux = head->abajo;
-        while (PtrAux->abajo != filaPtr) {
-            PtrAux = PtrAux->abajo;
-        }
-        PtrAux->abajo = filaPtr->abajo;
-        delete filaPtr;
-        filaPtr = PtrAux;
-        numFilas-=1;
-    }
-
-    while (colPtr-> abajo == colPtr) {
-        Nodo* PtrAux = head->derecha;
-        while (PtrAux->derecha != colPtr) {
-            PtrAux = PtrAux->derecha;
-        }
-        PtrAux->derecha = colPtr->derecha;
-        delete colPtr;
-        colPtr = PtrAux;
-        numColumnas-=1;
-    }
+    optimizar();
 
 }
 
 void SparseMatrix::printValues() const {
-    Nodo* filaPtr = head->abajo;
+    Nodo* filaPtr = head->getAbajo();
     while (filaPtr != head) {
-        Nodo* colPtr = filaPtr->derecha;
+        Nodo* colPtr = filaPtr->getDerecha();
         while (colPtr != filaPtr) {
-            cout << "(" << colPtr->fila << "," << colPtr->columna << ") = " << colPtr->valor << "\n";
-            colPtr = colPtr->derecha;
+            cout << "(" << colPtr->getFila() << "," << colPtr->getColumna() << ") = " << colPtr->getValor() << "\n";
+            colPtr = colPtr->getDerecha();
         }
-        filaPtr = filaPtr->abajo;
+        filaPtr = filaPtr->getAbajo();
     }
 }
 
@@ -242,15 +241,37 @@ double SparseMatrix::density() const{
 
 SparseMatrix* SparseMatrix::multiply(const SparseMatrix& otra) {
 
-    if (this->numColumnas != otra.numFilas) {
-        cout << "Estas matrices son incompatibles para multiplicar" << endl;
-        return nullptr;
+    Nodo* filaPtr = otra.head->getAbajo();
+    Nodo* colPtr = this -> head->getDerecha();
+
+    while (this-> numColumnas > otra.numFilas) {
+        if (filaPtr->getAbajo() == head) {
+            filaPtr-> setAbajo(new Nodo(filaPtr->getFila() +1 , filaPtr->getColumna(), 0));
+            filaPtr-> getAbajo()-> setAbajo(head);
+            filaPtr-> getAbajo()-> setArriba(filaPtr);
+            numFilas++;
+        } else {
+            filaPtr = filaPtr->getAbajo();
+        }
+    }
+
+
+    while (this -> numColumnas < otra.numFilas) {
+        if (colPtr->getDerecha() == head) {
+            colPtr->setDerecha(new Nodo(colPtr->getFila(), colPtr->getColumna() +1 , 0));
+            colPtr->getDerecha()->setDerecha(head);
+            colPtr->getDerecha()->setIzquierda(colPtr);
+            numColumnas++;
+        } else {
+            colPtr = colPtr->getDerecha();
+        }
     }
 
     SparseMatrix* MatrizAux = new SparseMatrix();
 
-    Nodo* filaPtr = head->abajo;
-    Nodo* colPtr = otra.head->derecha;
+    filaPtr = head->getAbajo();
+    colPtr = otra.head->getDerecha();
+
 
     while (filaPtr != head) {
         while (colPtr != otra.head) {
@@ -258,41 +279,43 @@ SparseMatrix* SparseMatrix::multiply(const SparseMatrix& otra) {
             Nodo* temp = filaPtr;
             Nodo* temp2 = colPtr;
 
-            filaPtr = filaPtr->derecha;
-            colPtr = colPtr->abajo;
+            filaPtr = filaPtr->getDerecha();
+            colPtr = colPtr->getAbajo();
 
             int suma = 0;
 
             while (filaPtr != temp && colPtr != temp2) {
 
-                if (filaPtr-> columna == colPtr->fila) {
-                    suma += filaPtr->valor * colPtr->valor;
-                    filaPtr = filaPtr->derecha;
-                    colPtr = colPtr->abajo;
+                if (filaPtr-> getColumna() == colPtr->getFila()) {
+                    suma += filaPtr->getValor()  * colPtr->getValor();
+                    filaPtr = filaPtr->getDerecha();
+                    colPtr = colPtr->getAbajo();
                 }
-                else if (filaPtr-> columna > colPtr->fila) {
-                    colPtr = colPtr->abajo;
+                else if (filaPtr-> getColumna() > colPtr->getFila()) {
+                    colPtr = colPtr->getAbajo();
                 }
-                else if (filaPtr-> columna < colPtr->fila) {
-                    filaPtr = filaPtr->derecha;
+                else if (filaPtr-> getColumna() < colPtr->getFila()) {
+                    filaPtr = filaPtr->getDerecha();
                 }
             }
             while (filaPtr != temp || colPtr != temp2) {
                 if (filaPtr != temp) {
-                    filaPtr = filaPtr->derecha;
+                    filaPtr = filaPtr->getDerecha();
                 }
                 if (colPtr != temp2) {
-                    colPtr = colPtr->abajo;
+                    colPtr = colPtr->getAbajo();
                 }
             }
 
-            MatrizAux-> add(temp->fila,temp2->columna,suma);
+            MatrizAux-> add(temp->getFila(),temp2->getColumna(),suma);
 
-            colPtr = colPtr->derecha;
+            colPtr = colPtr->getDerecha();
         }
-        colPtr = colPtr->derecha;
-        filaPtr = filaPtr->abajo;
+        colPtr = colPtr->getDerecha();
+        filaPtr = filaPtr->getAbajo();
     }
+
+    optimizar();
 
     return MatrizAux;
 }
