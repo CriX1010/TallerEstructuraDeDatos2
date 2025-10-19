@@ -60,7 +60,6 @@ double SparseMatrix::cantNodos()  const{
 bool SparseMatrix::existe(int fila,int columna) {
 
     if (fila > numFilas || columna > numColumnas || fila < 0 || columna < 0) {
-        cout << "El valor esta fuera de rango" << endl;
         return false;
     }
     Nodo* AuxPtr = head->abajo;
@@ -171,6 +170,7 @@ void SparseMatrix::remove(int fila, int columna) {
 
     if (fila > numFilas || columna > numColumnas || fila < 0 || columna < 0) {
         cout << "El valor esta fuera de rango" << endl;
+        return;
     }
 
     Nodo* filaPtr = head->abajo;
@@ -199,6 +199,29 @@ void SparseMatrix::remove(int fila, int columna) {
     filaPtr->derecha = temp ->derecha;
     colPtr->abajo = temp->abajo;
     delete temp;
+
+    while (filaPtr-> derecha == filaPtr) {
+        Nodo* PtrAux = head->abajo;
+        while (PtrAux->abajo != filaPtr) {
+            PtrAux = PtrAux->abajo;
+        }
+        PtrAux->abajo = filaPtr->abajo;
+        delete filaPtr;
+        filaPtr = PtrAux;
+        numFilas-=1;
+    }
+
+    while (colPtr-> abajo == colPtr) {
+        Nodo* PtrAux = head->derecha;
+        while (PtrAux->derecha != colPtr) {
+            PtrAux = PtrAux->derecha;
+        }
+        PtrAux->derecha = colPtr->derecha;
+        delete colPtr;
+        colPtr = PtrAux;
+        numColumnas-=1;
+    }
+
 }
 
 void SparseMatrix::printValues() const {
@@ -224,10 +247,52 @@ SparseMatrix* SparseMatrix::multiply(const SparseMatrix& otra) {
         return nullptr;
     }
 
+    SparseMatrix* MatrizAux = new SparseMatrix();
 
     Nodo* filaPtr = head->abajo;
     Nodo* colPtr = otra.head->derecha;
 
+    while (filaPtr != head) {
+        while (colPtr != otra.head) {
 
+            Nodo* temp = filaPtr;
+            Nodo* temp2 = colPtr;
 
+            filaPtr = filaPtr->derecha;
+            colPtr = colPtr->abajo;
+
+            int suma = 0;
+
+            while (filaPtr != temp && colPtr != temp2) {
+
+                if (filaPtr-> columna == colPtr->fila) {
+                    suma += filaPtr->valor * colPtr->valor;
+                    filaPtr = filaPtr->derecha;
+                    colPtr = colPtr->abajo;
+                }
+                else if (filaPtr-> columna > colPtr->fila) {
+                    colPtr = colPtr->abajo;
+                }
+                else if (filaPtr-> columna < colPtr->fila) {
+                    filaPtr = filaPtr->derecha;
+                }
+            }
+            while (filaPtr != temp || colPtr != temp2) {
+                if (filaPtr != temp) {
+                    filaPtr = filaPtr->derecha;
+                }
+                if (colPtr != temp2) {
+                    colPtr = colPtr->abajo;
+                }
+            }
+
+            MatrizAux-> add(temp->fila,temp2->columna,suma);
+
+            colPtr = colPtr->derecha;
+        }
+        colPtr = colPtr->derecha;
+        filaPtr = filaPtr->abajo;
+    }
+
+    return MatrizAux;
 }
