@@ -56,7 +56,6 @@ void SparseMatrix::optimizar() {
     }
 }
 
-
 double SparseMatrix::cantNodos()  const{
     double cont = 0;
     Nodo* filaPtr = head->getAbajo();
@@ -162,8 +161,6 @@ void SparseMatrix::add(int fila, int columna, double valor) {
     colPtr->getAbajo()->setArriba(colPtr);
 
 }
-
-// ---------------------- Get ----------------------
 int SparseMatrix::get(int fila, int columna) {
 
     if (fila > numFilas || columna > numColumnas || fila < 0 || columna < 0) {
@@ -182,7 +179,6 @@ int SparseMatrix::get(int fila, int columna) {
 
     return AuxPtr->getValor();
 }
-// ---------------------- Remove ----------------------
 void SparseMatrix::remove(int fila, int columna) {
 
     if (fila > numFilas || columna > numColumnas || fila < 0 || columna < 0) {
