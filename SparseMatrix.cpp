@@ -219,7 +219,7 @@ void SparseMatrix::remove(int fila, int columna) {
 
 }
 
-void SparseMatrix::printValues() const {
+void SparseMatrix::printStoredValues() const {
     Nodo* filaPtr = head->getAbajo();
     while (filaPtr != head) {
         Nodo* colPtr = filaPtr->getDerecha();

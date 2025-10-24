@@ -17,11 +17,10 @@ public:
     SparseMatrix();
     ~SparseMatrix();
 
-    // Funciones principales
     void add(int fila, int columna, double valor);
     int get(int fila, int columna);
     void remove(int fila, int columna);
-    void printValues() const;
+    void printStoredValues() const;
     double density() const;
     SparseMatrix* multiply(const SparseMatrix& otra);
 };
